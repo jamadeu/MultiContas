@@ -2,13 +2,14 @@ version: '3.1'
 
 services:
   db:
-    image: 'mongo'
+    image: 'postgres:alpine'
     environment:
-      MONGO_INITDB_DATABASE: contas
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
     ports:
-      - 27017:27017
+      - "5432:5432"
     volumes:
-      - contas_data:/var/lib/mongo
+      - contas_data:/var/lib/postgresql/data
 
 volumes:
   contas_data:

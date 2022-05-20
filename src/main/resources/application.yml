@@ -1,4 +1,16 @@
 spring:
-  data:
-    mongodb:
-      uri: mongodb://root:root@127.0.0.1:27017/contas
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/postgres?schema=contas
+    username: root
+    password: root
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
+
+server:
+  error:
+    include-stacktrace: on_param

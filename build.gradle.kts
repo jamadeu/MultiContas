@@ -16,7 +16,6 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -26,6 +25,10 @@ dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug")
 	implementation("io.projectreactor.tools:blockhound:1.0.6.RELEASE")
+
+	implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+	runtimeOnly("io.r2dbc:r2dbc-postgresql")
+	runtimeOnly("org.postgresql:postgresql")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
