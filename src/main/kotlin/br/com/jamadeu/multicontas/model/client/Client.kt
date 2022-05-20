@@ -5,9 +5,10 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.validation.constraints.NotEmpty
 
-@Table
+@Table("clients")
 data class Client(
     @Id
     var id: Long = 0,
@@ -20,10 +21,10 @@ data class Client(
     val cpf: String,
 
     @Column("created_at")
-    val createdAt: LocalDate = LocalDate.now(),
+    val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column("updated_at")
-    val updatedAt: LocalDate = LocalDate.now()
+    val updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
 
 }

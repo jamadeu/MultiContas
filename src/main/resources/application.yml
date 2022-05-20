@@ -1,6 +1,6 @@
 spring:
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/postgres?schema=contas
+    url: r2dbc:postgresql://localhost:5432/postgres?schema=accounts
     username: root
     password: root
 
