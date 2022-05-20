@@ -11,7 +11,6 @@ class Application
 fun main(args: Array<String>) {
 	BlockHound
 		.builder()
-		.allowBlockingCallsInside("java.util.UUID", "randomUUID")
 		.with(CoroutinesBlockHoundIntegration())
 		.install()
 	runApplication<Application>(*args)

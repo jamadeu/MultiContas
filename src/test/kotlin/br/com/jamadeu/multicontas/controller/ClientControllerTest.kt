@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.EmptySource
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.BDDMockito
 import org.mockito.BDDMockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,7 +43,9 @@ internal class ClientControllerTest {
     fun `create returns a client when successful`() {
         val client = client()
         val request = createClientRequest(client.name, client.cpf)
-        `when`(clientRepository.save(ArgumentMatchers.any(Client::class.java)))
+        `when`(clientRepository.findByCpf(request.cpf!!))
+            .thenReturn(Mono.empty())
+        `when`(clientRepository.save(any(Client::class.java)))
             .thenReturn(Mono.just(client))
 
         webTestClient
@@ -62,9 +65,25 @@ internal class ClientControllerTest {
     @EmptySource
     @ValueSource(strings = ["111.111.111-11"])
     fun `create returns bad request when cpf is null, empty or invalid`(cpf: String?) {
+        val request = createClientRequest(cpf = cpf)
+
+        webTestClient
+            .post()
+            .uri("/v1/clients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(request))
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(400)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+    }
+
+    @Test
+    fun `create returns bad request when client already exists`() {
         val client = client()
-        val request = createClientRequest(client.name, cpf = cpf)
-        `when`(clientRepository.save(ArgumentMatchers.any(Client::class.java)))
+        val request = createClientRequest(client.name, client.cpf)
+        `when`(clientRepository.findByCpf(request.cpf!!))
             .thenReturn(Mono.just(client))
 
         webTestClient
@@ -86,7 +105,7 @@ internal class ClientControllerTest {
     ) = CreateClientRequest(name, cpf)
 
     private fun client(
-        id: UUID = UUID.nameUUIDFromBytes("UUID".toByteArray()),
+        id: Long = 1L,
         name: String = "Client",
         cpf: String = "844.781.250-23"
     ) = Client(id, name, cpf)
