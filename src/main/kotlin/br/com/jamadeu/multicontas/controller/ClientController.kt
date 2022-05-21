@@ -3,7 +3,9 @@ package br.com.jamadeu.multicontas.controller
 import br.com.jamadeu.multicontas.model.client.Client
 import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
 import br.com.jamadeu.multicontas.service.ClientService
+import org.hibernate.validator.constraints.br.CPF
 import org.springframework.http.HttpStatus
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -16,9 +18,11 @@ import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import java.net.URI
 import javax.validation.Valid
+import javax.validation.constraints.NotBlank
 
 @RestController
 @RequestMapping("/v1/clients")
+@Validated
 class ClientController(
     val clientService: ClientService
 ) {
@@ -30,7 +34,6 @@ class ClientController(
             .flatMap { client ->
                 uriBuilder.path("/v1/clients/{id}").buildAndExpand(client.id).toUri().toMono()
             }
-//        return clientService.create(request.toClient())
     }
 
     @GetMapping("/{id}")
@@ -38,4 +41,12 @@ class ClientController(
     fun findById(@PathVariable("id") id: Long): Mono<Client> {
         return clientService.findById(id)
     }
+
+    @GetMapping("/cpf/{cpf}")
+    @ResponseStatus(HttpStatus.OK)
+    fun findByCpf(@PathVariable("cpf") @Valid @CPF @NotBlank cpf: String): Mono<Client> {
+        return clientService.findByCpf(cpf)
+    }
+
+
 }

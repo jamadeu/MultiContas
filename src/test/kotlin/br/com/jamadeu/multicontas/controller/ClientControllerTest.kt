@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.BDDMockito
 import org.mockito.BDDMockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
@@ -48,8 +49,6 @@ internal class ClientControllerTest {
             .thenReturn(Mono.empty())
         `when`(clientRepository.save(any(Client::class.java)))
             .thenReturn(Mono.just(client))
-
-        val expectedUri =
 
         webTestClient
             .post()
@@ -125,6 +124,49 @@ internal class ClientControllerTest {
             .expectStatus().isNotFound
             .expectBody()
             .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+    }
+
+    @Test
+    fun `findByCpf returns a mono with client when it exists`(){
+        val client = client()
+        `when`(clientRepository.findByCpf(client.cpf)).thenReturn(Mono.just(client))
+
+        webTestClient
+            .get()
+            .uri("/v1/clients/cpf/${client.cpf}")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(Client::class.java)
+            .isEqualTo<BodySpec<Client, *>>(client)
+    }
+
+    @Test
+    fun `findByCpf returns not found when client does not exists`(){
+        `when`(clientRepository.findByCpf(anyString())).thenReturn(Mono.empty())
+
+        webTestClient
+            .get()
+            .uri("/v1/clients/cpf/844.781.250-23")
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @EmptySource
+    @ValueSource(strings = ["111.111.111-11"])
+    fun `findByCpf returns bad request when cpf is null, empty or invalid`(cpf: String?) {
+        webTestClient
+            .get()
+            .uri("/v1/clients/cpf/${cpf}")
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
     }
 
