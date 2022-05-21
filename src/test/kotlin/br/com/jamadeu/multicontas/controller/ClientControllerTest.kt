@@ -49,6 +49,8 @@ internal class ClientControllerTest {
         `when`(clientRepository.save(any(Client::class.java)))
             .thenReturn(Mono.just(client))
 
+        val expectedUri =
+
         webTestClient
             .post()
             .uri("/v1/clients")
@@ -56,8 +58,8 @@ internal class ClientControllerTest {
             .body(BodyInserters.fromValue(request))
             .exchange()
             .expectStatus().isCreated
-            .expectBody(Client::class.java)
-            .isEqualTo<BodySpec<Client, *>>(client)
+            .expectBody(String::class.java)
+            .isEqualTo<BodySpec<String, *>>("\"/v1/clients/${client.id}\"")
     }
 
     @ParameterizedTest
