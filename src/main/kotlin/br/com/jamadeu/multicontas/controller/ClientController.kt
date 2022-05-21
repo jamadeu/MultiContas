@@ -4,6 +4,8 @@ import br.com.jamadeu.multicontas.model.client.Client
 import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
 import br.com.jamadeu.multicontas.service.ClientService
 import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,5 +24,11 @@ class ClientController(
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateClientRequest): Mono<Client>{
         return clientService.create(request.toClient())
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    fun findById(@PathVariable("id") id: Long): Mono<Client>{
+        return clientService.findById(id)
     }
 }

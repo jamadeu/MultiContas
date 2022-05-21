@@ -21,4 +21,8 @@ class ClientService(
             }
             .flatMap { clientRepository.save(request) }
 
+    fun findById(id: Long): Mono<Client> =
+        clientRepository.findById(id)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found")))
+
 }
