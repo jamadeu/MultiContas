@@ -21,6 +21,6 @@ class ClientController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateClientRequest): Mono<Client>{
-        return clientService.create(request.toClient()).log()
+        return clientService.create(request.toClient())
     }
 }

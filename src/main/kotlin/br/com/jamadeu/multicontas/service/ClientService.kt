@@ -12,31 +12,13 @@ class ClientService(
     val clientRepository: ClientRepository
 ) {
 
-    fun create(client: Client): Mono<Client> {
-        clientRepository.findByCpf(client.cpf)
+    fun create(request: Client): Mono<Client> =
+        clientRepository.findByCpf(request.cpf)
             .hasElement()
-            .doOnNext { hasElement ->
-                if (hasElement) {Mono.error<ResponseStatusException>(
-                    ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Client already exists"
-                    )
-                )}
+            .map { clientExists ->
+                if (clientExists)
+                    throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Client already exists")
             }
-        return clientRepository.save(client)
-    }
-//        Mono.just(request)
-//            .doOnNext { client ->
-//                findByCpf(client.cpf)
-//                    .hasElement()
-//                    .doOnNext { hasElement ->
-//                        if (hasElement) Mono.error<ResponseStatusException>(
-//                            ResponseStatusException(
-//                                HttpStatus.BAD_REQUEST,
-//                                "Client already exists"
-//                            )
-//                        )
-//                    }
-//            }
-//            .flatMap { client -> clientRepository.save(client) }
+            .flatMap { clientRepository.save(request) }
+
 }
