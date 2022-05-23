@@ -7,6 +7,7 @@ import br.com.jamadeu.multicontas.service.ClientService
 import org.hibernate.validator.constraints.br.CPF
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -31,7 +32,6 @@ import javax.validation.constraints.NotBlank
 class ClientController(
     val clientService: ClientService
 ) {
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     fun create(@Valid @RequestBody request: CreateClientRequest, uriBuilder: UriComponentsBuilder): Mono<URI> =
@@ -41,24 +41,25 @@ class ClientController(
                 uriBuilder.path("/v1/clients/{id}").buildAndExpand(client.id).toUri().toMono()
             }
 
-
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     fun findById(@PathVariable("id") id: Long): Mono<Client> =
         clientService.findById(id)
-
 
     @GetMapping("/cpf/{cpf}")
     @ResponseStatus(HttpStatus.OK)
     fun findByCpf(@PathVariable("cpf") @Valid @CPF @NotBlank cpf: String): Mono<Client> =
         clientService.findByCpf(cpf)
 
-
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun update(@PathVariable("id") id: Long, @Valid @RequestBody request: UpdateClientRequest): Mono<Void> =
         clientService.update(id, request)
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(@PathVariable("id") id: Long): Mono<Void> =
+        clientService.delete(id)
 
     @ExceptionHandler(ConstraintViolationException::class)
     private fun constraintViolationExceptionHandler(exception: ConstraintViolationException) {

@@ -32,6 +32,7 @@ dependencies {
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
+	testImplementation("io.r2dbc:r2dbc-h2")
 }
 
 tasks.withType<KotlinCompile> {

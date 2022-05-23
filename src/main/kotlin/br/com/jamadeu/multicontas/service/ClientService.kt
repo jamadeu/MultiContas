@@ -36,4 +36,7 @@ class ClientService(
             .flatMap { client -> request.toClient(client).toMono() }
             .flatMap { updatedClient -> clientRepository.save(updatedClient) }
             .then()
+
+    fun delete(id: Long): Mono<Void> =
+        clientRepository.deleteById(id)
 }

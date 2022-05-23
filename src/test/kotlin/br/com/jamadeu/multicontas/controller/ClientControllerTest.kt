@@ -6,6 +6,7 @@ import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
 import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.repository.ClientRepository
 import br.com.jamadeu.multicontas.service.ClientService
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,26 +20,64 @@ import org.mockito.BDDMockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.BodySpec
 import org.springframework.web.reactive.function.BodyInserters
 import reactor.core.publisher.Mono
+import reactor.test.StepVerifier
+import reactor.test.StepVerifier.FirstStep
 import java.time.LocalDateTime
+import java.util.function.Consumer
+
 
 @ExtendWith(SpringExtension::class)
 @WebFluxTest
-@Import(ClientService::class, Resources::class, CustomAttributes::class)
+@Import(ClientRepository::class, ClientService::class, Resources::class, CustomAttributes::class)
+@ActiveProfiles("test")
 internal class ClientControllerTest {
-
-    @MockBean
+    //TODO Implement h2 for testing
+    @Autowired
     lateinit var clientRepository: ClientRepository
 
     @Autowired
+    lateinit var clientService: ClientService
+
+    @Autowired
+    lateinit var database: DatabaseClient
+
+
+    @Autowired
     lateinit var webTestClient: WebTestClient
+
+    @BeforeAll
+    fun setup(){
+        var statements = listOf(//
+            "DROP TABLE IF EXISTS clients;",
+            "CREATE TABLE public.clients (\n" +
+                    "\tid serial NOT NULL,\n" +
+                    "\tname varchar NOT NULL,\n" +
+                    "\tcpf varchar NOT NULL,\n" +
+                    "\tcreated_at date NOT NULL,\n" +
+                    "\tupdated_at date NOT NULL,\n" +
+                    "\tCONSTRAINT clients_pk PRIMARY KEY (id),\n" +
+                    "\tCONSTRAINT clients_un UNIQUE (id),\n" +
+                    "\tCONSTRAINT clients_un UNIQUE (cpf)\n" +
+                    ");");
+
+        statements.forEach{
+            database.sql(it)
+                .fetch()
+                .rowsUpdated()
+                .`as`(StepVerifier::create)
+                .expectNextCount(1)
+                .verifyComplete()
+        }
+    }
 
     @Test
     fun `create returns a client when successful`() {
@@ -240,6 +279,17 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+    }
+
+    @Test
+    fun `delete removes client when successful`(){
+        `when`(clientRepository.deleteById(anyLong())).thenReturn(Mono.empty())
+
+        webTestClient
+            .delete()
+            .uri("/v1/clients/1")
+            .exchange()
+            .expectStatus().isNoContent
     }
 
     private fun updateClientRequest(
