@@ -1,11 +1,13 @@
 package br.com.jamadeu.multicontas.service
 
 import br.com.jamadeu.multicontas.model.client.Client
+import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.repository.ClientRepository
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.toMono
 
 @Service
 class ClientService(
@@ -29,4 +31,9 @@ class ClientService(
         clientRepository.findByCpf(cpf)
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Client not found")))
 
+    fun update(id: Long, request: UpdateClientRequest): Mono<Void> =
+        findById(id)
+            .flatMap { client -> request.toClient(client).toMono() }
+            .flatMap { updatedClient -> clientRepository.save(updatedClient) }
+            .then()
 }
