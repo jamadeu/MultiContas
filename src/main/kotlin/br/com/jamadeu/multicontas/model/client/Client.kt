@@ -4,7 +4,7 @@ import org.hibernate.validator.constraints.br.CPF
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.time.LocalDateTime
+import java.time.LocalDate
 import javax.validation.constraints.NotEmpty
 
 @Table("clients")
@@ -20,9 +20,8 @@ data class Client(
     val cpf: String,
 
     @Column("created_at")
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val createdAt: LocalDate = LocalDate.now(),
 
     @Column("updated_at")
-    val updatedAt: LocalDateTime = LocalDateTime.now()
-    //TODO change createdAt and updatedAt types for LocalDate
+    val updatedAt: LocalDate= LocalDate.now()
 ) {}

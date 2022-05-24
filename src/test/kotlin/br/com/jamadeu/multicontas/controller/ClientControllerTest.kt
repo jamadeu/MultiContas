@@ -1,46 +1,42 @@
 package br.com.jamadeu.multicontas.controller
 
-import br.com.jamadeu.multicontas.exception.handler.CustomAttributes
 import br.com.jamadeu.multicontas.model.client.Client
 import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
 import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.repository.ClientRepository
 import br.com.jamadeu.multicontas.service.ClientService
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EmptySource
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyLong
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.BDDMockito.`when`
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.web.WebProperties.Resources
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.context.annotation.Import
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.DatabaseClient
-import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.annotation.DirtiesContext
+import org.springframework.test.context.event.annotation.AfterTestClass
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.BodySpec
 import org.springframework.web.reactive.function.BodyInserters
-import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import reactor.test.StepVerifier.FirstStep
-import java.time.LocalDateTime
-import java.util.function.Consumer
-
+import java.time.LocalDate
 
 @ExtendWith(SpringExtension::class)
-@WebFluxTest
-@Import(ClientRepository::class, ClientService::class, Resources::class, CustomAttributes::class)
-@ActiveProfiles("test")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext
+@AutoConfigureWebTestClient
 internal class ClientControllerTest {
-    //TODO Implement h2 for testing
+    //TODO Fix ActiveProfiles
     @Autowired
     lateinit var clientRepository: ClientRepository
 
@@ -50,14 +46,13 @@ internal class ClientControllerTest {
     @Autowired
     lateinit var database: DatabaseClient
 
-
     @Autowired
     lateinit var webTestClient: WebTestClient
 
-    @BeforeAll
-    fun setup(){
-        var statements = listOf(//
-            "DROP TABLE IF EXISTS clients;",
+    @BeforeEach
+    fun setup() {
+        val statements = listOf(//
+            "DROP TABLE IF EXISTS public.clients;",
             "CREATE TABLE public.clients (\n" +
                     "\tid serial NOT NULL,\n" +
                     "\tname varchar NOT NULL,\n" +
@@ -65,11 +60,11 @@ internal class ClientControllerTest {
                     "\tcreated_at date NOT NULL,\n" +
                     "\tupdated_at date NOT NULL,\n" +
                     "\tCONSTRAINT clients_pk PRIMARY KEY (id),\n" +
-                    "\tCONSTRAINT clients_un UNIQUE (id),\n" +
                     "\tCONSTRAINT clients_un UNIQUE (cpf)\n" +
-                    ");");
+                    ");"
+        )
 
-        statements.forEach{
+        statements.forEach {
             database.sql(it)
                 .fetch()
                 .rowsUpdated()
@@ -80,15 +75,11 @@ internal class ClientControllerTest {
     }
 
     @Test
-    fun `create returns a client when successful`() {
+    fun `create returns a uri with the created client when successful`() {
         val client = client()
         val request = createClientRequest(client.name, client.cpf)
-        `when`(clientRepository.findByCpf(request.cpf!!))
-            .thenReturn(Mono.empty())
-        `when`(clientRepository.save(any(Client::class.java)))
-            .thenReturn(Mono.just(client))
 
-        webTestClient
+        val response = webTestClient
             .post()
             .uri("/v1/clients")
             .contentType(MediaType.APPLICATION_JSON)
@@ -97,6 +88,17 @@ internal class ClientControllerTest {
             .expectStatus().isCreated
             .expectBody(String::class.java)
             .isEqualTo<BodySpec<String, *>>("\"/v1/clients/${client.id}\"")
+            .returnResult()
+
+        clientRepository
+            .findById(client.id)
+            .doOnNext { savedClient ->
+                assertNotNull(savedClient)
+                assertEquals(client.name, savedClient.name)
+                assertEquals(client.cpf, savedClient.cpf)
+                assertNotNull(savedClient.createdAt)
+                assertNotNull(savedClient.updatedAt)
+            }
     }
 
     @ParameterizedTest
@@ -116,6 +118,11 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .hasElements()
+            .doOnNext { hasElements -> assertFalse(hasElements) }
     }
 
     @ParameterizedTest
@@ -134,45 +141,60 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .hasElements()
+            .doOnNext { hasElements -> assertFalse(hasElements) }
     }
 
     @Test
     fun `create returns bad request when client already exists`() {
-        val client = client()
-        val request = createClientRequest(client.name, client.cpf)
-        `when`(clientRepository.findByCpf(request.cpf!!))
-            .thenReturn(Mono.just(client))
+        val request = createClientRequest()
+        clientRepository.save(request.toClient())
+            .doOnNext {
+                webTestClient
+                    .post()
+                    .uri("/v1/clients")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(request))
+                    .exchange()
+                    .expectStatus().isBadRequest
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+            }
+            .subscribe()
 
-        webTestClient
-            .post()
-            .uri("/v1/clients")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(request))
-            .exchange()
-            .expectStatus().isBadRequest
-            .expectBody()
-            .jsonPath("$.status").isEqualTo(400)
-            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
     }
 
     @Test
     fun `findById returns a mono with client when it exists`() {
-        val client = client()
-        `when`(clientRepository.findById(client.id)).thenReturn(Mono.just(client))
+        clientRepository
+            .save(client())
+            .doOnNext {
+                webTestClient
+                    .get()
+                    .uri("/v1/clients/${it.id}")
+                    .exchange()
+                    .expectStatus().isOk
+                    .expectBody(Client::class.java)
+                    .isEqualTo<BodySpec<Client, *>>(it)
+            }
+            .subscribe()
 
-        webTestClient
-            .get()
-            .uri("/v1/clients/${client.id}")
-            .exchange()
-            .expectStatus().isOk
-            .expectBody(Client::class.java)
-            .isEqualTo<BodySpec<Client, *>>(client)
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
     }
 
     @Test
     fun `findById returns not found when client does not exists`() {
-        `when`(clientRepository.findById(anyLong())).thenReturn(Mono.empty())
-
         webTestClient
             .get()
             .uri("/v1/clients/1")
@@ -181,26 +203,36 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(404)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     @Test
     fun `findByCpf returns a mono with client when it exists`() {
-        val client = client()
-        `when`(clientRepository.findByCpf(client.cpf)).thenReturn(Mono.just(client))
+        clientRepository
+            .save(client())
+            .doOnNext {
+                webTestClient
+                    .get()
+                    .uri("/v1/clients/cpf/${it.cpf}")
+                    .exchange()
+                    .expectStatus().isOk
+                    .expectBody(Client::class.java)
+                    .isEqualTo<BodySpec<Client, *>>(it)
+            }
+            .subscribe()
 
-        webTestClient
-            .get()
-            .uri("/v1/clients/cpf/${client.cpf}")
-            .exchange()
-            .expectStatus().isOk
-            .expectBody(Client::class.java)
-            .isEqualTo<BodySpec<Client, *>>(client)
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
     }
 
     @Test
     fun `findByCpf returns not found when client does not exists`() {
-        `when`(clientRepository.findByCpf(anyString())).thenReturn(Mono.empty())
-
         webTestClient
             .get()
             .uri("/v1/clients/cpf/844.781.250-23")
@@ -209,6 +241,11 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(404)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     @ParameterizedTest
@@ -224,24 +261,37 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     @Test
     fun `update returns a client when successful`() {
         val client = client()
         val request = updateClientRequest()
-        `when`(clientRepository.findById(client.id))
-            .thenReturn(Mono.just(client))
-        `when`(clientRepository.save(any(Client::class.java)))
-            .thenReturn(Mono.empty())
+        clientRepository
+            .save(client)
+            .doOnNext {
+                webTestClient
+                    .put()
+                    .uri("/v1/clients/${client.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(request))
+                    .exchange()
+                    .expectStatus().isNoContent
+            }
+            .subscribe()
 
-        webTestClient
-            .put()
-            .uri("/v1/clients/${client.id}")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(request))
-            .exchange()
-            .expectStatus().isNoContent
+        clientRepository
+            .findById(client.id)
+            .doOnNext { foundedClient ->
+                assertEquals(request.name, foundedClient.name)
+                assertEquals(request.cpf, foundedClient.cpf)
+                assertTrue(foundedClient.updatedAt.isAfter(client.updatedAt))
+            }
     }
 
     @ParameterizedTest
@@ -261,6 +311,11 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     @ParameterizedTest
@@ -279,17 +334,45 @@ internal class ClientControllerTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(400)
             .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     @Test
-    fun `delete removes client when successful`(){
-        `when`(clientRepository.deleteById(anyLong())).thenReturn(Mono.empty())
+    fun `delete removes client when successful`() {
+        val client = client()
+        clientRepository
+            .save(client)
+            .doOnNext {
+                webTestClient
+                    .delete()
+                    .uri("/v1/clients/${it.id}")
+                    .exchange()
+                    .expectStatus().isNoContent
+            }
+            .subscribe()
 
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `delete returns status code 204 when client does not exists`() {
         webTestClient
             .delete()
             .uri("/v1/clients/1")
             .exchange()
             .expectStatus().isNoContent
+
+        clientRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
     }
 
     private fun updateClientRequest(
@@ -306,7 +389,7 @@ internal class ClientControllerTest {
         id: Long = 1L,
         name: String = "Client",
         cpf: String = "844.781.250-23",
-        createdAt: LocalDateTime = LocalDateTime.now(),
-        updatedAt: LocalDateTime = LocalDateTime.now()
+        createdAt: LocalDate = LocalDate.now(),
+        updatedAt: LocalDate = LocalDate.now()
     ) = Client(id, name, cpf, createdAt, updatedAt)
 }

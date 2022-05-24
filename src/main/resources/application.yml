@@ -1,8 +1,20 @@
 spring:
+  profiles:
+    active: default
+---
+#spring:
+#  profiles: default
+#  r2dbc:
+#    url: r2dbc:postgresql://localhost:5432/postgres?schema=accounts
+#    username: root
+#    password: root
+---
+spring:
+  profiles: test
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/postgres?schema=accounts
-    username: root
-    password: root
+    url: r2dbc:h2:mem:///test?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    name: sa
+    password:
 
 logging:
   level:
