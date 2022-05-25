@@ -20,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.WebTestClient.BodySpec
 import org.springframework.web.reactive.function.BodyInserters
 import reactor.test.StepVerifier
 import java.math.BigDecimal
@@ -79,8 +80,7 @@ internal class AccountControllerTest {
             .exchange()
             .expectStatus().isCreated
             .expectBody(String::class.java)
-            .isEqualTo<WebTestClient.BodySpec<String, *>>("\"/v1/accounts/${account.id}\"")
-            .returnResult()
+            .isEqualTo<BodySpec<String, *>>("\"/v1/accounts/${account.id}\"")
 
         accountRepository
             .findById(account.id)
@@ -160,6 +160,43 @@ internal class AccountControllerTest {
                     .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
             }
             .subscribe()
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
+    }
+
+    @Test
+    fun `findById returns not found when account does not exists`() {
+        webTestClient
+            .get()
+            .uri("/v1/accounts/1")
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `findById returns a mono with account when it exists`() {
+        accountRepository
+            .save(account())
+            .doOnNext { account ->
+                webTestClient
+                    .post()
+                    .uri("/v1/accounts/${account.id}")
+                    .exchange()
+                    .expectStatus().isOk
+                    .expectBody(Account::class.java)
+                    .isEqualTo<BodySpec<String, *>>(account)
+            }.subscribe()
 
         accountRepository
             .findAll()

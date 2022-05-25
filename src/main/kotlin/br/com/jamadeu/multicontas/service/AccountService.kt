@@ -18,4 +18,9 @@ class AccountService(
                 if (accountExists)
                     throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already exists")
             }.flatMap { accountRepository.save(account) }
+
+    fun findById(id: Long): Mono<Account> =
+        accountRepository
+            .findById(id)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
 }
