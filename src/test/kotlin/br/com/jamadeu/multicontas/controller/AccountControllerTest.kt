@@ -204,6 +204,43 @@ internal class AccountControllerTest {
             .doOnNext { count -> assertEquals(1, count) }
     }
 
+    @Test
+    fun `findByAccountAndBranch returns not found when account does not exists`() {
+        webTestClient
+            .get()
+            .uri("/v1/accounts/account-number/1234/branch-number/5678")
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `findByAccountAndBranch returns a mono with account when it exists`() {
+        accountRepository
+            .save(account())
+            .doOnNext { account ->
+                webTestClient
+                    .post()
+                    .uri("/v1/accounts/account-number/${account.accountNumber}/branch-number/${account.branchNumber}")
+                    .exchange()
+                    .expectStatus().isOk
+                    .expectBody(Account::class.java)
+                    .isEqualTo<BodySpec<String, *>>(account)
+            }.subscribe()
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
+    }
+
     private fun account(
         id: Long = 1L,
         accountNumber: String = "1234",

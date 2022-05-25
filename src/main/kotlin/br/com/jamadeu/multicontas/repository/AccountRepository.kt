@@ -7,4 +7,7 @@ import reactor.core.publisher.Mono
 interface AccountRepository : ReactiveCrudRepository<Account, Long> {
 
     fun existsByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String): Mono<Boolean>
+
+    fun findByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String): Mono<Account>
+
 }

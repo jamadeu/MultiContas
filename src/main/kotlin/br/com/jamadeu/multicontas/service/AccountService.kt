@@ -23,4 +23,9 @@ class AccountService(
         accountRepository
             .findById(id)
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
+
+    fun findByAccountAndBranch(accountNumber: String, branchNumber: String): Mono<Account> =
+        accountRepository
+            .findByAccountNumberAndBranchNumber(accountNumber = accountNumber, branchNumber = branchNumber)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
 }
