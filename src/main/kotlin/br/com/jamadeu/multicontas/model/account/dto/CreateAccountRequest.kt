@@ -14,8 +14,18 @@ data class CreateAccountRequest(
     val balance: BigDecimal?,
 ) {
     fun toAccount() =
-        Account(
-            accountNumber = accountNumber ?: throw RuntimeException("accountNumber cannot be null"),
-            branchNumber = branchNumber ?: throw RuntimeException("branchNumber cannot be null"),
-        )
+        with(balance) {
+            if (this == null) {
+                Account(
+                    accountNumber = accountNumber ?: throw RuntimeException("Account number cannot be null"),
+                    branchNumber = branchNumber ?: throw RuntimeException("Account branchNumber cannot be null")
+                )
+            } else {
+                Account(
+                    accountNumber = accountNumber ?: throw RuntimeException("Account number cannot be null"),
+                    branchNumber = branchNumber ?: throw RuntimeException("Account branchNumber cannot be null"),
+                    balance = this
+                )
+            }
+        }
 }

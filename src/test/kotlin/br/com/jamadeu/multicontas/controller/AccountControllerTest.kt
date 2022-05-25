@@ -32,6 +32,7 @@ import java.time.LocalDate
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 internal class AccountControllerTest {
+    //TODO implement tests for the update endpoint
     @Autowired
     lateinit var accountRepository: AccountRepository
 
@@ -71,6 +72,33 @@ internal class AccountControllerTest {
     fun `create returns a uri with the created account id when successful`() {
         val account = account()
         val request = createAccountRequest(account.accountNumber, account.branchNumber, account.balance)
+
+        webTestClient
+            .post()
+            .uri("/v1/accounts")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(request))
+            .exchange()
+            .expectStatus().isCreated
+            .expectBody(String::class.java)
+            .isEqualTo<BodySpec<String, *>>("\"/v1/accounts/${account.id}\"")
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { savedAccount ->
+                Assertions.assertNotNull(savedAccount)
+                assertEquals(account.accountNumber, savedAccount.accountNumber)
+                assertEquals(account.branchNumber, savedAccount.branchNumber)
+                assertEquals(account.balance, savedAccount.balance)
+                Assertions.assertNotNull(savedAccount.createdAt)
+                Assertions.assertNotNull(savedAccount.updatedAt)
+            }
+    }
+
+    @Test
+    fun `create if balance null it must be zero`() {
+        val account = account()
+        val request = createAccountRequest(account.accountNumber, account.branchNumber, balance = null)
 
         webTestClient
             .post()
@@ -245,7 +273,7 @@ internal class AccountControllerTest {
         id: Long = 1L,
         accountNumber: String = "1234",
         branchNumber: String = "5678",
-        balance: BigDecimal = BigDecimal.valueOf(1000),
+        balance: BigDecimal = BigDecimal.ZERO,
         createdAt: LocalDate = LocalDate.now(),
         updatedAt: LocalDate = LocalDate.now()
     ) = Account(id, accountNumber, branchNumber, balance, createdAt, updatedAt)
@@ -253,6 +281,6 @@ internal class AccountControllerTest {
     private fun createAccountRequest(
         accountNumber: String? = "1234",
         branchNumber: String? = "5678",
-        balance: BigDecimal = BigDecimal.valueOf(1000),
+        balance: BigDecimal? = BigDecimal.valueOf(1000),
     ) = CreateAccountRequest(accountNumber, branchNumber, balance)
 }
