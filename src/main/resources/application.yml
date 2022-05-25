@@ -2,12 +2,12 @@ spring:
   profiles:
     active: default
 ---
-#spring:
-#  profiles: default
-#  r2dbc:
-#    url: r2dbc:postgresql://localhost:5432/postgres?schema=accounts
-#    username: root
-#    password: root
+spring:
+  profiles: default
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/postgres?schema=accounts
+    username: root
+    password: root
 ---
 spring:
   profiles: test

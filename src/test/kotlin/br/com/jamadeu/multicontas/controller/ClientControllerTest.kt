@@ -4,8 +4,6 @@ import br.com.jamadeu.multicontas.model.client.Client
 import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
 import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.repository.ClientRepository
-import br.com.jamadeu.multicontas.service.ClientService
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -23,7 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.event.annotation.AfterTestClass
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.BodySpec
@@ -35,13 +33,10 @@ import java.time.LocalDate
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext
 @AutoConfigureWebTestClient
+@ActiveProfiles("test")
 internal class ClientControllerTest {
-    //TODO Fix ActiveProfiles
     @Autowired
     lateinit var clientRepository: ClientRepository
-
-    @Autowired
-    lateinit var clientService: ClientService
 
     @Autowired
     lateinit var database: DatabaseClient
