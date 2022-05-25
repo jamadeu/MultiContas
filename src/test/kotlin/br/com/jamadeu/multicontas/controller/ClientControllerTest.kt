@@ -70,11 +70,11 @@ internal class ClientControllerTest {
     }
 
     @Test
-    fun `create returns a uri with the created client when successful`() {
+    fun `create returns a uri with the created client id when successful`() {
         val client = client()
         val request = createClientRequest(client.name, client.cpf)
 
-        val response = webTestClient
+        webTestClient
             .post()
             .uri("/v1/clients")
             .contentType(MediaType.APPLICATION_JSON)
