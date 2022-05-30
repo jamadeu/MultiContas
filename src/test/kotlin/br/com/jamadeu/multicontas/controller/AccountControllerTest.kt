@@ -2,9 +2,12 @@ package br.com.jamadeu.multicontas.controller
 
 import br.com.jamadeu.multicontas.model.account.Account
 import br.com.jamadeu.multicontas.model.account.dto.CreateAccountRequest
+import br.com.jamadeu.multicontas.model.account.dto.UpdateAccountRequest
 import br.com.jamadeu.multicontas.repository.AccountRepository
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -86,12 +89,12 @@ internal class AccountControllerTest {
         accountRepository
             .findById(account.id)
             .doOnNext { savedAccount ->
-                Assertions.assertNotNull(savedAccount)
+                assertNotNull(savedAccount)
                 assertEquals(account.accountNumber, savedAccount.accountNumber)
                 assertEquals(account.branchNumber, savedAccount.branchNumber)
                 assertEquals(account.balance, savedAccount.balance)
-                Assertions.assertNotNull(savedAccount.createdAt)
-                Assertions.assertNotNull(savedAccount.updatedAt)
+                assertNotNull(savedAccount.createdAt)
+                assertNotNull(savedAccount.updatedAt)
             }
     }
 
@@ -113,12 +116,12 @@ internal class AccountControllerTest {
         accountRepository
             .findById(account.id)
             .doOnNext { savedAccount ->
-                Assertions.assertNotNull(savedAccount)
+                assertNotNull(savedAccount)
                 assertEquals(account.accountNumber, savedAccount.accountNumber)
                 assertEquals(account.branchNumber, savedAccount.branchNumber)
                 assertEquals(account.balance, savedAccount.balance)
-                Assertions.assertNotNull(savedAccount.createdAt)
-                Assertions.assertNotNull(savedAccount.updatedAt)
+                assertNotNull(savedAccount.createdAt)
+                assertNotNull(savedAccount.updatedAt)
             }
     }
 
@@ -269,6 +272,109 @@ internal class AccountControllerTest {
             .doOnNext { count -> assertEquals(1, count) }
     }
 
+    @Test
+    fun `update returns no content when successful`() {
+        val account = account()
+        accountRepository.save(account)
+        val request = updateAccountRequest()
+
+        webTestClient
+            .put()
+            .uri("/v1/accounts/${account.id}")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(request))
+            .exchange()
+            .expectStatus().isNoContent
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { savedAccount ->
+                assertNotNull(savedAccount)
+                assertEquals(request.accountNumber, savedAccount.accountNumber)
+                assertEquals(request.branchNumber, savedAccount.branchNumber)
+                assertEquals(request.balance, savedAccount.balance)
+                assertEquals(account.createdAt, savedAccount.createdAt)
+                assertTrue(savedAccount.updatedAt.isAfter(savedAccount.createdAt))
+            }
+    }
+
+    @Test
+    fun `update returns not found when account does not exists`() {
+        val request = updateAccountRequest()
+
+        webTestClient
+            .put()
+            .uri("/v1/accounts/10")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(request))
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `update returns bad request when account already exists`() {
+        //TODO test fail
+        val accountAlreadyExists = account(
+            id = 2,
+            accountNumber = "9876",
+            branchNumber = "9876"
+        )
+        val account = account()
+        val saveAll = accountRepository.saveAll(mutableListOf(account, accountAlreadyExists))
+        val request = updateAccountRequest(
+            accountNumber = "9876",
+            branchNumber = "9876"
+        )
+
+        webTestClient
+            .put()
+            .uri("/v1/accounts/${account.id}")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(request))
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(2, count) }
+
+        accountRepository
+            .findById(accountAlreadyExists.id)
+            .doOnNext { foundedAccount ->
+                assertNotNull(foundedAccount)
+                assertEquals(accountAlreadyExists.accountNumber, foundedAccount.accountNumber)
+                assertEquals(accountAlreadyExists.branchNumber, foundedAccount.branchNumber)
+                assertEquals(accountAlreadyExists.balance, foundedAccount.balance)
+                assertEquals(accountAlreadyExists.createdAt, foundedAccount.updatedAt)
+                assertNotNull(foundedAccount.createdAt)
+                assertNotNull(foundedAccount.updatedAt)
+            }
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { foundedAccount ->
+                assertNotNull(foundedAccount)
+                assertEquals(account.accountNumber, foundedAccount.accountNumber)
+                assertEquals(account.branchNumber, foundedAccount.branchNumber)
+                assertEquals(account.balance, foundedAccount.balance)
+                assertEquals(account.createdAt, foundedAccount.updatedAt)
+                assertNotNull(foundedAccount.createdAt)
+                assertNotNull(foundedAccount.updatedAt)
+            }
+    }
+
     private fun account(
         id: Long = 1L,
         accountNumber: String = "1234",
@@ -283,4 +389,10 @@ internal class AccountControllerTest {
         branchNumber: String? = "5678",
         balance: BigDecimal? = BigDecimal.valueOf(1000),
     ) = CreateAccountRequest(accountNumber, branchNumber, balance)
+
+    private fun updateAccountRequest(
+        accountNumber: String? = "5678",
+        branchNumber: String? = "1234",
+        balance: BigDecimal? = BigDecimal.valueOf(5000),
+    ) = UpdateAccountRequest(accountNumber, branchNumber, balance)
 }

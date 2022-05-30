@@ -39,6 +39,7 @@ class AccountController(
         accountService.findById(id)
 
     @GetMapping("/account-number/{accountNumber}/branch-number/{branchNumber}")
+    @ResponseStatus(HttpStatus.OK)
     fun findByAccountAndBranch(
         @PathVariable("accountNumber") accountNumber: String,
         @PathVariable("branchNumber") branchNumber: String

@@ -33,23 +33,21 @@ class AccountService(
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
 
     fun update(id: Long, request: UpdateAccountRequest): Mono<Void> =
-        Mono.just(request)
-            .doOnNext { updateAccountRequest ->
-                findById(id)
-                    .doOnNext { account ->
-                        if (account.accountNumber != updateAccountRequest.accountNumber ||
-                            account.branchNumber != updateAccountRequest.branchNumber
-                        ) {
-                            checkIdAccountExistsByAccountNumberAndBranchNumber(
-                                accountNumber = updateAccountRequest.accountNumber
-                                    ?: throw RuntimeException("AccountNumber cannot be null"),
-                                branchNumber = updateAccountRequest.branchNumber
-                                    ?: throw RuntimeException("branchNumber cannot be null")
-                            )
-                        }
-                    }
-                    .flatMap { account -> accountRepository.save(request.toAccount(account)) }
+        findById(id)
+            .map { account ->
+                if (account.accountNumber != request.accountNumber ||
+                    account.branchNumber != request.branchNumber
+                ) {
+                    checkIdAccountExistsByAccountNumberAndBranchNumber(
+                        accountNumber = request.accountNumber
+                            ?: throw RuntimeException("AccountNumber cannot be null"),
+                        branchNumber = request.branchNumber
+                            ?: throw RuntimeException("branchNumber cannot be null")
+                    )
+                }
+                return@map account
             }
+            .flatMap { account -> accountRepository.save(request.toAccount(account)) }
             .then()
 
     private fun checkIdAccountExistsByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String) {
