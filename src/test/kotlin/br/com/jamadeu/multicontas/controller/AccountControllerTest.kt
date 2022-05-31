@@ -381,6 +381,39 @@ internal class AccountControllerTest {
             }
     }
 
+    @Test
+    fun `delete removes account when successful`() {
+        accountRepository
+            .save(account())
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .delete()
+                    .uri("/v1/accounts/${savedAccount.id}")
+                    .exchange()
+                    .expectStatus().isNoContent
+            }
+            .subscribe()
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `delete returns no content when account does not exists`() {
+        webTestClient
+            .delete()
+            .uri("/v1/accounts/1")
+            .exchange()
+            .expectStatus().isNoContent
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
     private fun account(
         id: Long = 1L,
         accountNumber: String = "1234",

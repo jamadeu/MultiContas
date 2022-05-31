@@ -50,6 +50,8 @@ class AccountService(
             .flatMap { account -> accountRepository.save(request.toAccount(account)) }
             .then()
 
+    fun delete(id: Long): Mono<Void> = accountRepository.deleteById(id)
+
     private fun checkIdAccountExistsByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String) {
         accountRepository
             .existsByAccountNumberAndBranchNumber(accountNumber, branchNumber)
@@ -58,4 +60,5 @@ class AccountService(
                     throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already exists")
             }
     }
+
 }
