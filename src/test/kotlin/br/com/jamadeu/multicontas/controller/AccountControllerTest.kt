@@ -35,7 +35,6 @@ import java.time.LocalDate
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 internal class AccountControllerTest {
-    //TODO implement tests for the update endpoint
     @Autowired
     lateinit var accountRepository: AccountRepository
 
@@ -227,7 +226,8 @@ internal class AccountControllerTest {
                     .expectStatus().isOk
                     .expectBody(Account::class.java)
                     .isEqualTo<BodySpec<String, *>>(account)
-            }.subscribe()
+            }
+            .subscribe()
 
         accountRepository
             .findAll()
@@ -264,7 +264,8 @@ internal class AccountControllerTest {
                     .expectStatus().isOk
                     .expectBody(Account::class.java)
                     .isEqualTo<BodySpec<String, *>>(account)
-            }.subscribe()
+            }
+            .subscribe()
 
         accountRepository
             .findAll()
@@ -275,16 +276,19 @@ internal class AccountControllerTest {
     @Test
     fun `update returns no content when successful`() {
         val account = account()
-        accountRepository.save(account)
         val request = updateAccountRequest()
-
-        webTestClient
-            .put()
-            .uri("/v1/accounts/${account.id}")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(request))
-            .exchange()
-            .expectStatus().isNoContent
+        accountRepository
+            .save(account)
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .put()
+                    .uri("/v1/accounts/${savedAccount.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(request))
+                    .exchange()
+                    .expectStatus().isNoContent
+            }
+            .subscribe()
 
         accountRepository
             .findById(account.id)
@@ -321,29 +325,31 @@ internal class AccountControllerTest {
 
     @Test
     fun `update returns bad request when account already exists`() {
-        //TODO test fail
+        val account = account(id = 2)
         val accountAlreadyExists = account(
-            id = 2,
             accountNumber = "9876",
             branchNumber = "9876"
         )
-        val account = account()
-        val saveAll = accountRepository.saveAll(mutableListOf(account, accountAlreadyExists))
         val request = updateAccountRequest(
             accountNumber = "9876",
             branchNumber = "9876"
         )
+        accountRepository.save(accountAlreadyExists)
+        accountRepository.save(account)
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .put()
+                    .uri("/v1/accounts/${savedAccount.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(request))
+                    .exchange()
+                    .expectStatus().isBadRequest
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
 
-        webTestClient
-            .put()
-            .uri("/v1/accounts/${account.id}")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(BodyInserters.fromValue(request))
-            .exchange()
-            .expectStatus().isBadRequest
-            .expectBody()
-            .jsonPath("$.status").isEqualTo(404)
-            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+            }
+            .subscribe()
 
         accountRepository
             .findAll()
