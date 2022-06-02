@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.domain.client.dto
+package br.com.jamadeu.multicontas.application.client.dto
 
 
 import br.com.jamadeu.multicontas.domain.client.Client

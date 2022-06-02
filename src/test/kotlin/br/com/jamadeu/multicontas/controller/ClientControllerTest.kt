@@ -1,8 +1,8 @@
 package br.com.jamadeu.multicontas.controller
 
 import br.com.jamadeu.multicontas.domain.client.Client
-import br.com.jamadeu.multicontas.domain.client.dto.CreateClientRequest
-import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
+import br.com.jamadeu.multicontas.application.client.dto.CreateClientRequest
+import br.com.jamadeu.multicontas.application.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.adapters.client.R2dbcClientRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

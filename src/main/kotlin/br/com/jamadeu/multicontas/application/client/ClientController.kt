@@ -1,8 +1,8 @@
-package br.com.jamadeu.multicontas.controller
+package br.com.jamadeu.multicontas.application.client
 
 import br.com.jamadeu.multicontas.domain.client.Client
-import br.com.jamadeu.multicontas.domain.client.dto.CreateClientRequest
-import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
+import br.com.jamadeu.multicontas.application.client.dto.CreateClientRequest
+import br.com.jamadeu.multicontas.application.client.dto.UpdateClientRequest
 import br.com.jamadeu.multicontas.domain.client.ClientService
 import org.hibernate.validator.constraints.br.CPF
 import org.springframework.http.HttpStatus
@@ -30,7 +30,7 @@ import javax.validation.constraints.NotBlank
 @RequestMapping("/v1/clients")
 @Validated
 class ClientController(
-    val clientService: ClientService
+   private val clientService: ClientService
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

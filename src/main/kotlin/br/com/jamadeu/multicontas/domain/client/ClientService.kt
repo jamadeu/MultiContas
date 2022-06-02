@@ -1,6 +1,6 @@
 package br.com.jamadeu.multicontas.domain.client
 
-import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
+import br.com.jamadeu.multicontas.application.client.dto.UpdateClientRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
