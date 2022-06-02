@@ -1,9 +1,9 @@
 package br.com.jamadeu.multicontas.controller
 
-import br.com.jamadeu.multicontas.model.client.Client
-import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
-import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
-import br.com.jamadeu.multicontas.service.ClientService
+import br.com.jamadeu.multicontas.domain.client.Client
+import br.com.jamadeu.multicontas.domain.client.dto.CreateClientRequest
+import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
+import br.com.jamadeu.multicontas.domain.client.ClientService
 import org.hibernate.validator.constraints.br.CPF
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated

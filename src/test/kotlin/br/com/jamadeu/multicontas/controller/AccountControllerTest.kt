@@ -1,9 +1,9 @@
 package br.com.jamadeu.multicontas.controller
 
-import br.com.jamadeu.multicontas.model.account.Account
-import br.com.jamadeu.multicontas.model.account.dto.CreateAccountRequest
-import br.com.jamadeu.multicontas.model.account.dto.UpdateAccountRequest
-import br.com.jamadeu.multicontas.repository.AccountRepository
+import br.com.jamadeu.multicontas.domain.account.Account
+import br.com.jamadeu.multicontas.application.account.dto.CreateAccountRequest
+import br.com.jamadeu.multicontas.application.account.dto.UpdateAccountRequest
+import br.com.jamadeu.multicontas.adapters.account.R2dbcAccountRepository
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -36,7 +36,7 @@ import java.time.LocalDate
 @ActiveProfiles("test")
 internal class AccountControllerTest {
     @Autowired
-    lateinit var accountRepository: AccountRepository
+    lateinit var accountRepository: R2dbcAccountRepository
 
     @Autowired
     lateinit var database: DatabaseClient
@@ -55,8 +55,8 @@ internal class AccountControllerTest {
                     "\tbalance decimal NOT NULL,\n" +
                     "\tcreated_at date NOT NULL,\n" +
                     "\tupdated_at date NOT NULL,\n" +
-                    "\tCONSTRAINT clients_pk PRIMARY KEY (id),\n" +
-                    "\tCONSTRAINT clients_un UNIQUE (account_number, branch_number)\n" +
+                    "\tCONSTRAINT accounts_pk PRIMARY KEY (id),\n" +
+                    "\tCONSTRAINT accounts_un UNIQUE (account_number, branch_number)\n" +
                     ");"
         )
 

@@ -1,9 +1,9 @@
-package br.com.jamadeu.multicontas.controller
+package br.com.jamadeu.multicontas.application.account
 
-import br.com.jamadeu.multicontas.model.account.Account
-import br.com.jamadeu.multicontas.model.account.dto.CreateAccountRequest
-import br.com.jamadeu.multicontas.model.account.dto.UpdateAccountRequest
-import br.com.jamadeu.multicontas.service.AccountService
+import br.com.jamadeu.multicontas.domain.account.Account
+import br.com.jamadeu.multicontas.domain.account.AccountService
+import br.com.jamadeu.multicontas.application.account.dto.CreateAccountRequest
+import br.com.jamadeu.multicontas.application.account.dto.UpdateAccountRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -23,7 +23,7 @@ import javax.validation.Valid
 @RestController
 @RequestMapping("/v1/accounts")
 class AccountController(
-    val accountService: AccountService
+    private val accountService: AccountService
 ) {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

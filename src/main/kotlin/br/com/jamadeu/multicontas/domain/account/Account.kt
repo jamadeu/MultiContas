@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.model.account
+package br.com.jamadeu.multicontas.domain.account
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column

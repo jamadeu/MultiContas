@@ -1,6 +1,6 @@
-package br.com.jamadeu.multicontas.model.account.dto
+package br.com.jamadeu.multicontas.application.account.dto
 
-import br.com.jamadeu.multicontas.model.account.Account
+import br.com.jamadeu.multicontas.domain.account.Account
 import java.math.BigDecimal
 import javax.validation.constraints.NotBlank
 

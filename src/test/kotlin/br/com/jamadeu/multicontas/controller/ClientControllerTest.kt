@@ -1,9 +1,9 @@
 package br.com.jamadeu.multicontas.controller
 
-import br.com.jamadeu.multicontas.model.client.Client
-import br.com.jamadeu.multicontas.model.client.dto.CreateClientRequest
-import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
-import br.com.jamadeu.multicontas.repository.ClientRepository
+import br.com.jamadeu.multicontas.domain.client.Client
+import br.com.jamadeu.multicontas.domain.client.dto.CreateClientRequest
+import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
+import br.com.jamadeu.multicontas.adapters.client.R2dbcClientRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -36,7 +36,7 @@ import java.time.LocalDate
 @ActiveProfiles("test")
 internal class ClientControllerTest {
     @Autowired
-    lateinit var clientRepository: ClientRepository
+    lateinit var clientRepository: R2dbcClientRepository
 
     @Autowired
     lateinit var database: DatabaseClient

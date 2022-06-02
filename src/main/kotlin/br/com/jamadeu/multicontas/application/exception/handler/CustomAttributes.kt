@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.exception.handler
+package br.com.jamadeu.multicontas.application.exception.handler
 
 import org.springframework.boot.web.error.ErrorAttributeOptions
 import org.springframework.boot.web.reactive.error.DefaultErrorAttributes

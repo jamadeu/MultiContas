@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.model.client
+package br.com.jamadeu.multicontas.domain.client
 
 import org.hibernate.validator.constraints.br.CPF
 import org.springframework.data.annotation.Id

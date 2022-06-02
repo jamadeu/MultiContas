@@ -1,8 +1,6 @@
-package br.com.jamadeu.multicontas.service
+package br.com.jamadeu.multicontas.domain.client
 
-import br.com.jamadeu.multicontas.model.client.Client
-import br.com.jamadeu.multicontas.model.client.dto.UpdateClientRequest
-import br.com.jamadeu.multicontas.repository.ClientRepository
+import br.com.jamadeu.multicontas.domain.client.dto.UpdateClientRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -11,7 +9,7 @@ import reactor.kotlin.core.publisher.toMono
 
 @Service
 class ClientService(
-    val clientRepository: ClientRepository
+    private val clientRepository: ClientRepository
 ) {
 
     fun create(request: Client): Mono<Client> =

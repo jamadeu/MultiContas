@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.configuration
+package br.com.jamadeu.multicontas.application.configuration
 
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources
 import org.springframework.context.annotation.Bean

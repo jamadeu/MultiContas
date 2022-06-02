@@ -1,8 +1,6 @@
-package br.com.jamadeu.multicontas.service
+package br.com.jamadeu.multicontas.domain.account
 
-import br.com.jamadeu.multicontas.model.account.Account
-import br.com.jamadeu.multicontas.model.account.dto.UpdateAccountRequest
-import br.com.jamadeu.multicontas.repository.AccountRepository
+import br.com.jamadeu.multicontas.application.account.dto.UpdateAccountRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -10,7 +8,7 @@ import reactor.core.publisher.Mono
 
 @Service
 class AccountService(
-    val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository
 ) {
     fun create(account: Account): Mono<Account> =
         Mono.just(account)

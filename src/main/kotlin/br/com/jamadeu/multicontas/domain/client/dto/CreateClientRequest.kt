@@ -1,7 +1,7 @@
-package br.com.jamadeu.multicontas.model.client.dto
+package br.com.jamadeu.multicontas.domain.client.dto
 
 
-import br.com.jamadeu.multicontas.model.client.Client
+import br.com.jamadeu.multicontas.domain.client.Client
 import org.hibernate.validator.constraints.br.CPF
 import javax.validation.constraints.NotEmpty
 

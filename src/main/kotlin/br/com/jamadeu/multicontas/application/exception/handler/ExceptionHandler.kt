@@ -1,4 +1,4 @@
-package br.com.jamadeu.multicontas.exception.handler
+package br.com.jamadeu.multicontas.application.exception.handler
 
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler
