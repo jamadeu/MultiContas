@@ -3,6 +3,7 @@ package br.com.jamadeu.multicontas.adapters.account
 import br.com.jamadeu.multicontas.domain.account.Account
 import br.com.jamadeu.multicontas.domain.account.AccountRepository
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Component
@@ -18,4 +19,6 @@ class AccountRepositoryAdapter(private val repository: R2dbcAccountRepository) :
 
     override fun findByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String): Mono<Account> =
         repository.findByAccountNumberAndBranchNumber(accountNumber, branchNumber)
+
+    override fun findByClientId(clientId: Long): Flux<Account> = repository.findByClientId(clientId)
 }

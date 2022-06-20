@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import java.net.URI
@@ -45,6 +46,11 @@ class AccountController(
         @PathVariable("accountNumber") accountNumber: String,
         @PathVariable("branchNumber") branchNumber: String
     ): Mono<Account> = accountService.findByAccountAndBranch(accountNumber, branchNumber)
+
+    @GetMapping("/clientId/{clientId}")
+    @ResponseStatus(HttpStatus.OK)
+    fun findByClientId(@PathVariable("clientId") clientId: Long): Flux<Account> =
+        accountService.findByClientId(clientId)
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)

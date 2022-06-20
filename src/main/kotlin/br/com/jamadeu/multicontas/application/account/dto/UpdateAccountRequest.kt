@@ -15,13 +15,17 @@ data class UpdateAccountRequest(
 
     @field:NotNull(message = "branchNumber cannot be null")
     val balance: BigDecimal?,
+
+    @field:NotNull(message = "clientId cannot be null")
+    val clientId: Long?
 ) {
     fun toAccount(account: Account) =
         Account(
             id = account.id,
-            accountNumber = accountNumber ?: throw RuntimeException("accountNumber cannot be null"),
-            branchNumber = branchNumber ?: throw RuntimeException("branchNumber cannot be null"),
-            balance = balance ?: throw RuntimeException("branchNumber cannot be null"),
+            accountNumber = accountNumber ?: throw RuntimeException("AccountNumber cannot be null"),
+            branchNumber = branchNumber ?: throw RuntimeException("BranchNumber cannot be null"),
+            balance = balance ?: throw RuntimeException("Balance cannot be null"),
+            clientId = clientId ?: throw RuntimeException("ClientId cannot be null"),
             updatedAt = LocalDate.now(),
             createdAt = account.createdAt
         )

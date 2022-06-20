@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.Table
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 
 @Table("accounts")
 data class Account(
@@ -21,6 +22,10 @@ data class Account(
     val branchNumber: String,
 
     val balance: BigDecimal = BigDecimal.ZERO,
+
+    @field:NotNull(message = "clientId cannot be null")
+    @Column("client_id")
+    val clientId: Long,
 
     @Column("created_at")
     val createdAt: LocalDate = LocalDate.now(),

@@ -1,9 +1,9 @@
 package br.com.jamadeu.multicontas.controller
 
-import br.com.jamadeu.multicontas.domain.account.Account
+import br.com.jamadeu.multicontas.adapters.account.R2dbcAccountRepository
 import br.com.jamadeu.multicontas.application.account.dto.CreateAccountRequest
 import br.com.jamadeu.multicontas.application.account.dto.UpdateAccountRequest
-import br.com.jamadeu.multicontas.adapters.account.R2dbcAccountRepository
+import br.com.jamadeu.multicontas.domain.account.Account
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -53,10 +53,11 @@ internal class AccountControllerTest {
                     "\taccount_number varchar NOT NULL,\n" +
                     "\tbranch_number varchar NOT NULL,\n" +
                     "\tbalance decimal NOT NULL,\n" +
+                    "\tclient_id int NOT NULL,\n" +
                     "\tcreated_at date NOT NULL,\n" +
                     "\tupdated_at date NOT NULL,\n" +
                     "\tCONSTRAINT accounts_pk PRIMARY KEY (id),\n" +
-                    "\tCONSTRAINT accounts_un UNIQUE (account_number, branch_number)\n" +
+                    "\tCONSTRAINT accounts_un UNIQUE (account_number, branch_number, client_id)\n" +
                     ");"
         )
 
@@ -274,6 +275,44 @@ internal class AccountControllerTest {
     }
 
     @Test
+    fun `findByClientId returns not found when account does not exists`() {
+        webTestClient
+            .get()
+            .uri("/v1/accounts/clientId/1")
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `findByClientId returns a flux with account when it exists`() {
+        accountRepository
+            .save(account())
+            .doOnNext { account ->
+                webTestClient
+                    .post()
+                    .uri("/v1/accounts/clientId/${account.clientId}")
+                    .exchange()
+                    .expectStatus().isOk
+                    .expectBody(Account::class.java)
+                    .isEqualTo<BodySpec<String, *>>(account)
+            }
+            .subscribe()
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(1, count) }
+    }
+
+    @Test
     fun `update returns no content when successful`() {
         val account = account()
         val request = updateAccountRequest()
@@ -419,19 +458,22 @@ internal class AccountControllerTest {
         accountNumber: String = "1234",
         branchNumber: String = "5678",
         balance: BigDecimal = BigDecimal.ZERO,
+        clientId: Long = 1L,
         createdAt: LocalDate = LocalDate.now(),
         updatedAt: LocalDate = LocalDate.now()
-    ) = Account(id, accountNumber, branchNumber, balance, createdAt, updatedAt)
+    ) = Account(id, accountNumber, branchNumber, balance, clientId, createdAt, updatedAt)
 
     private fun createAccountRequest(
         accountNumber: String? = "1234",
         branchNumber: String? = "5678",
         balance: BigDecimal? = BigDecimal.valueOf(1000),
-    ) = CreateAccountRequest(accountNumber, branchNumber, balance)
+        clientId: Long = 1L
+    ) = CreateAccountRequest(accountNumber, branchNumber, balance, clientId)
 
     private fun updateAccountRequest(
         accountNumber: String? = "5678",
         branchNumber: String? = "1234",
         balance: BigDecimal? = BigDecimal.valueOf(5000),
-    ) = UpdateAccountRequest(accountNumber, branchNumber, balance)
+        clientId: Long = 1L
+    ) = UpdateAccountRequest(accountNumber, branchNumber, balance, clientId)
 }

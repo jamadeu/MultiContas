@@ -4,6 +4,7 @@ import br.com.jamadeu.multicontas.application.account.dto.UpdateAccountRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 @Service
@@ -50,6 +51,11 @@ class AccountService(
 
     fun delete(id: Long): Mono<Void> = accountRepository.deleteById(id)
 
+    fun findByClientId(clientId: Long): Flux<Account> =
+        accountRepository
+            .findByClientId(clientId)
+            .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
+
     private fun checkIdAccountExistsByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String) {
         accountRepository
             .existsByAccountNumberAndBranchNumber(accountNumber, branchNumber)
@@ -58,5 +64,4 @@ class AccountService(
                     throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Account already exists")
             }
     }
-
 }
