@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.math.BigDecimal
 
 @Service
 class AccountService(
@@ -55,6 +56,14 @@ class AccountService(
         accountRepository
             .findByClientId(clientId)
             .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found")))
+
+    fun deposit(accountId: Long, amount: BigDecimal): Mono<Void> =
+        findById(accountId)
+            .flatMap { account ->
+                account.deposit(amount)
+                accountRepository.save(account)
+            }
+            .then()
 
     private fun checkIdAccountExistsByAccountNumberAndBranchNumber(accountNumber: String, branchNumber: String) {
         accountRepository

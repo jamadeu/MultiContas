@@ -3,6 +3,7 @@ package br.com.jamadeu.multicontas.domain.account
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
+import reactor.core.publisher.Mono
 import java.math.BigDecimal
 import java.time.LocalDate
 import javax.validation.constraints.NotBlank
@@ -31,6 +32,11 @@ data class Account(
     val createdAt: LocalDate = LocalDate.now(),
 
     @Column("updated_at")
-    val updatedAt: LocalDate = LocalDate.now()
+    var updatedAt: LocalDate = LocalDate.now()
 ) {
+
+    fun deposit(amount: BigDecimal) {
+        this.balance.add(amount)
+        this.updatedAt = LocalDate.now()
+    }
 }

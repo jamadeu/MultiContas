@@ -453,6 +453,117 @@ internal class AccountControllerTest {
             .doOnNext { count -> assertEquals(0, count) }
     }
 
+    @Test
+    fun `deposit returns no content when successful`() {
+        val account = account()
+        val amount = BigDecimal.valueOf(1000)
+        accountRepository
+            .save(account)
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .put()
+                    .uri("/v1/accounts/deposit/account/${savedAccount.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(amount))
+                    .exchange()
+                    .expectStatus().isNoContent
+            }
+            .subscribe()
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { savedAccount ->
+                assertNotNull(savedAccount)
+                assertEquals(account.accountNumber, savedAccount.accountNumber)
+                assertEquals(account.branchNumber, savedAccount.branchNumber)
+                assertEquals(amount, savedAccount.balance)
+                assertEquals(account.createdAt, savedAccount.createdAt)
+                assertTrue(savedAccount.updatedAt.isAfter(savedAccount.createdAt))
+            }
+    }
+
+    @Test
+    fun `deposit returns not found when account does not exists`() {
+        webTestClient
+            .put()
+            .uri("/v1/accounts/deposit/account/10")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(BodyInserters.fromValue(BigDecimal.ONE))
+            .exchange()
+            .expectStatus().isNotFound
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404)
+            .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+
+        accountRepository
+            .findAll()
+            .count()
+            .doOnNext { count -> assertEquals(0, count) }
+    }
+
+    @Test
+    fun `deposit returns bad request when amount is null`() {
+        val account = account()
+        accountRepository
+            .save(account)
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .put()
+                    .uri("/v1/accounts/deposit/account/${savedAccount.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .exchange()
+                    .expectStatus().isBadRequest
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+            }
+            .subscribe()
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { savedAccount ->
+                assertNotNull(savedAccount)
+                assertEquals(account.accountNumber, savedAccount.accountNumber)
+                assertEquals(account.branchNumber, savedAccount.branchNumber)
+                assertEquals(account.balance, savedAccount.balance)
+                assertEquals(account.createdAt, savedAccount.createdAt)
+                assertEquals(account.updatedAt, savedAccount.updatedAt)
+            }
+    }
+
+    @Test
+    fun `deposit returns bad request when amount is negative`() {
+        //TODO check exception
+        val account = account()
+        accountRepository
+            .save(account)
+            .doOnNext { savedAccount ->
+                webTestClient
+                    .put()
+                    .uri("/v1/accounts/deposit/account/${savedAccount.id}")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(-1))
+                    .exchange()
+                    .expectStatus().isBadRequest
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(400)
+                    .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened")
+            }
+            .subscribe()
+
+        accountRepository
+            .findById(account.id)
+            .doOnNext { savedAccount ->
+                assertNotNull(savedAccount)
+                assertEquals(account.accountNumber, savedAccount.accountNumber)
+                assertEquals(account.branchNumber, savedAccount.branchNumber)
+                assertEquals(account.balance, savedAccount.balance)
+                assertEquals(account.createdAt, savedAccount.createdAt)
+                assertEquals(account.updatedAt, savedAccount.updatedAt)
+            }
+    }
+
+
     private fun account(
         id: Long = 1L,
         accountNumber: String = "1234",
