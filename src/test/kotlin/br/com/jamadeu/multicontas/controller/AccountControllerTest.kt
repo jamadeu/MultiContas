@@ -35,6 +35,7 @@ import java.time.LocalDate
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 internal class AccountControllerTest {
+    //TODO check exception
     @Autowired
     lateinit var accountRepository: R2dbcAccountRepository
 
@@ -103,7 +104,7 @@ internal class AccountControllerTest {
         val account = account()
         val request = createAccountRequest(account.accountNumber, account.branchNumber, balance = null)
 
-        webTestClient
+        val result = webTestClient
             .post()
             .uri("/v1/accounts")
             .contentType(MediaType.APPLICATION_JSON)
@@ -111,10 +112,14 @@ internal class AccountControllerTest {
             .exchange()
             .expectStatus().isCreated
             .expectBody(String::class.java)
-            .isEqualTo<BodySpec<String, *>>("\"/v1/accounts/${account.id}\"")
+            .returnResult()
+
+        val responseBody = result.responseBody ?: Assertions.fail("Response body null")
+        assertTrue(responseBody.contains("/v1/accounts/"))
+        val accountId = responseBody[14].code.toLong()
 
         accountRepository
-            .findById(account.id)
+            .findById(accountId)
             .doOnNext { savedAccount ->
                 assertNotNull(savedAccount)
                 assertEquals(account.accountNumber, savedAccount.accountNumber)
@@ -364,7 +369,7 @@ internal class AccountControllerTest {
 
     @Test
     fun `update returns bad request when account already exists`() {
-        val account = account(id = 2)
+        val account = account()
         val accountAlreadyExists = account(
             accountNumber = "9876",
             branchNumber = "9876"
@@ -373,7 +378,8 @@ internal class AccountControllerTest {
             accountNumber = "9876",
             branchNumber = "9876"
         )
-        accountRepository.save(accountAlreadyExists)
+
+        accountRepository.save(accountAlreadyExists).subscribe()
         accountRepository.save(account)
             .doOnNext { savedAccount ->
                 webTestClient
@@ -533,7 +539,6 @@ internal class AccountControllerTest {
 
     @Test
     fun `deposit returns bad request when amount is negative`() {
-        //TODO check exception
         val account = account()
         accountRepository
             .save(account)
@@ -563,9 +568,8 @@ internal class AccountControllerTest {
             }
     }
 
-
     private fun account(
-        id: Long = 1L,
+        id: Long = 0,
         accountNumber: String = "1234",
         branchNumber: String = "5678",
         balance: BigDecimal = BigDecimal.ZERO,
